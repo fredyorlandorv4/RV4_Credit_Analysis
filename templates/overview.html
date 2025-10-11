@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('overview') }} - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold mb-3">
+            <i class="bi bi-graph-up-arrow me-2"></i>
+            {{ get_text('overview_header') }}
+        </h1>
+        <p class="text-secondary">
+            {{ get_text('dashboard_desc') }}
+        </p>
+    </div>
+</div>
+
+<!-- Data Source Badge -->
+<div class="row mb-4">
+    <div class="col-12">
+        <span class="badge bg-primary bg-opacity-25 text-primary px-3 py-2">
+            <i class="bi bi-database me-1"></i>
+            {{ get_text('data_source_label') }}: {{ data_source }}
+        </span>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-file-earmark-text kpi-icon"></i>
+            <div class="kpi-value">{{ kpis.total_apps }}</div>
+            <div class="kpi-label">{{ get_text('kpi_total_apps') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-check-circle kpi-icon"></i>
+            <div class="kpi-value">{{ kpis.approval_rate }}</div>
+            <div class="kpi-label">{{ get_text('kpi_approval_rate') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-x-circle kpi-icon"></i>
+            <div class="kpi-value">{{ kpis.rejection_rate }}</div>
+            <div class="kpi-label">{{ get_text('kpi_rejection_rate') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-clock-history kpi-icon"></i>
+            <div class="kpi-value">{{ kpis.avg_processing_time }}</div>
+            <div class="kpi-label">{{ get_text('kpi_avg_time') }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Overview Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="model-overview">
+            <h3 class="mb-4">
+                <i class="bi bi-cpu me-2"></i>
+                {{ get_text('model_overview_title') }}
+            </h3>
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="model-metric">
+                        <div class="metric-value">92.5%</div>
+                        <div class="metric-label">{{ get_text('model_accuracy') }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="model-metric">
+                        <div class="metric-value">0.89</div>
+                        <div class="metric-label">{{ get_text('model_auc') }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="model-metric">
+                        <div class="metric-value">0.91</div>
+                        <div class="metric-label">{{ get_text('model_precision') }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="model-metric">
+                        <div class="metric-value">0.88</div>
+                        <div class="metric-label">{{ get_text('model_recall') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {{ get_text('model_info') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <!-- Trends Chart -->
+    <div class="col-lg-8 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-graph-up me-2"></i>
+                {{ get_text('chart_trends') }}
+            </h4>
+            <div id="trendsChart"></div>
+        </div>
+    </div>
+    
+    <!-- Funnel Chart -->
+    <div class="col-lg-4 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-funnel me-2"></i>
+                {{ get_text('chart_funnel') }}
+            </h4>
+            <div id="funnelChart"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Correlation Heatmap -->
+    <div class="col-lg-6 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-grid-3x3 me-2"></i>
+                {{ get_text('chart_correlation') }}
+            </h4>
+            <div id="heatmapChart"></div>
+        </div>
+    </div>
+    
+    <!-- Box Plot -->
+    <div class="col-lg-6 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-box me-2"></i>
+                {{ get_text('chart_distribution') }}
+            </h4>
+            <div id="boxPlotChart"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Sunburst Chart -->
+    <div class="col-12">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-pie-chart me-2"></i>
+                {{ get_text('chart_breakdown') }}
+            </h4>
+            <div id="sunburstChart" style="height: 500px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Training Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <h3 class="mb-4">
+                <i class="bi bi-cloud-upload me-2"></i>
+                {{ get_text('model_training_header') }}
+            </h3>
+            
+            <div class="row">
+                <div class="col-lg-6 mb-3">
+                    <form action="{{ url_for('retrain') }}" method="POST" enctype="multipart/form-data">
+                        <div class="upload-area" onclick="document.getElementById('datafile').click();">
+                            <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                            <h5>{{ get_text('upload_label') }}</h5>
+                            <p class="text-secondary mb-0">{{ get_text('drag_drop_text') }}</p>
+                            <input type="file" id="datafile" name="datafile" accept=".csv" style="display: none;" onchange="updateFileName(this)">
+                        </div>
+                        <div id="fileName" class="text-center mt-2 text-secondary"></div>
+                        <button type="submit" class="btn btn-primary-gradient w-100 mt-3">
+                            <i class="bi bi-arrow-repeat me-2"></i>
+                            {{ get_text('upload_button') }}
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="col-lg-6 mb-3">
+                    <div class="text-center">
+                        <h5 class="mb-3">{{ get_text('or') }}</h5>
+                        <form action="{{ url_for('use_sample_data') }}" method="POST">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-database me-2"></i>
+                                {{ get_text('use_sample_button') }}
+                            </button>
+                        </form>
+                        
+                        <div class="mt-4 p-3 bg-dark bg-opacity-25 rounded">
+                            <h6 class="text-primary">{{ get_text('sample_data_info_title') }}</h6>
+                            <p class="text-secondary small mb-0">
+                                {{ get_text('sample_data_description') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Apply dark theme to Plotly charts
+    const darkLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: {
+            color: '#F3F4F6',
+            family: 'Inter, sans-serif'
+        },
+        xaxis: {
+            gridcolor: 'rgba(55, 65, 81, 0.3)',
+            zerolinecolor: 'rgba(55, 65, 81, 0.3)'
+        },
+        yaxis: {
+            gridcolor: 'rgba(55, 65, 81, 0.3)',
+            zerolinecolor: 'rgba(55, 65, 81, 0.3)'
+        },
+        margin: {
+            l: 50,
+            r: 50,
+            t: 50,
+            b: 50
+        }
+    };
+
+    // Render all charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trends Chart
+        const trendsData = {{ graphs.trends | safe }};
+        Plotly.newPlot('trendsChart', trendsData.data, {...trendsData.layout, ...darkLayout});
+
+        // Funnel Chart
+        const funnelData = {{ graphs.funnel | safe }};
+        Plotly.newPlot('funnelChart', funnelData.data, {...funnelData.layout, ...darkLayout});
+
+        // Heatmap Chart
+        const heatmapData = {{ graphs.heatmap | safe }};
+        Plotly.newPlot('heatmapChart', heatmapData.data, {...heatmapData.layout, ...darkLayout});
+
+        // Box Plot Chart
+        const boxPlotData = {{ graphs.box_plot | safe }};
+        Plotly.newPlot('boxPlotChart', boxPlotData.data, {...boxPlotData.layout, ...darkLayout});
+
+        // Sunburst Chart
+        const sunburstData = {{ graphs.sunburst | safe }};
+        Plotly.newPlot('sunburstChart', sunburstData.data, {...sunburstData.layout, ...darkLayout});
+
+        // Make charts responsive
+        window.addEventListener('resize', function() {
+            Plotly.Plots.resize('trendsChart');
+            Plotly.Plots.resize('funnelChart');
+            Plotly.Plots.resize('heatmapChart');
+            Plotly.Plots.resize('boxPlotChart');
+            Plotly.Plots.resize('sunburstChart');
+        });
+    });
+
+    // File upload handler
+    function updateFileName(input) {
+        const fileName = input.files[0]?.name || '';
+        document.getElementById('fileName').textContent = fileName;
+    }
+</script>
+{% endblock %}

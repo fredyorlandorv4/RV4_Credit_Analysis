@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('completeness_model') }} - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold mb-3">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ get_text('completeness_header') }}
+        </h1>
+        <p class="text-secondary">
+            {{ get_text('completeness_desc') }}
+        </p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+    <!-- Document Checklist Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="dashboard-card h-100">
+            <h5 class="mb-4">
+                <i class="bi bi-clipboard-check me-2"></i>
+                {{ get_text('required_docs_header') }}
+            </h5>
+            
+            <form method="POST" action="{{ url_for('completeness') }}">
+                <!-- Applicant ID -->
+                <div class="mb-4">
+                    <label class="form-label">{{ get_text('applicant_id_label') }}</label>
+                    <input type="text" class="form-control" name="applicant_id" 
+                           value="{{ results.applicant_id if results else '' }}" required>
+                </div>
+                
+                <!-- Document Checklist -->
+                <div class="mb-4">
+                    <label class="form-label mb-3">{{ get_text('select_docs_to_evaluate') }}</label>
+                    
+                    <!-- Critical Documents Section -->
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            {{ get_text('critical_documents') }} (60% weight)
+                        </h6>
+                        {% for doc in required_docs %}
+                            {% if doc in document_weights.critical.docs %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="documents" 
+                                       value="{{ doc }}" id="{{ doc }}"
+                                       {% if results and doc in results.get('submitted_docs', []) %}checked{% endif %}>
+                                <label class="form-check-label" for="{{ doc }}">
+                                    {{ get_text(doc) }}
+                                    <span class="badge bg-danger ms-2">Critical</span>
+                                </label>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Supplementary Documents Section -->
+                    <div class="mb-3">
+                        <h6 class="text-warning mb-2">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            {{ get_text('supplementary_documents') }} (40% weight)
+                        </h6>
+                        {% for doc in required_docs %}
+                            {% if doc in document_weights.supplementary.docs %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="documents" 
+                                       value="{{ doc }}" id="{{ doc }}"
+                                       {% if results and doc in results.get('submitted_docs', []) %}checked{% endif %}>
+                                <label class="form-check-label" for="{{ doc }}">
+                                    {{ get_text(doc) }}
+                                    <span class="badge bg-warning text-dark ms-2">Supplementary</span>
+                                </label>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary-gradient w-100">
+                    <i class="bi bi-calculator me-2"></i>
+                    {{ get_text('check_completeness_button') }}
+                </button>
+            </form>
+            
+            <!-- Scoring Methodology Info -->
+            <div class="mt-4 p-3 bg-primary bg-opacity-10 rounded">
+                <h6 class="text-primary mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ get_text('scoring_methodology') }}
+                </h6>
+                <ul class="small mb-0 text-secondary">
+                    <li>{{ get_text('critical_weight_desc') }}: 60% of total score</li>
+                    <li>{{ get_text('supplementary_weight_desc') }}: 40% of total score</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Section -->
+    <div class="col-lg-6 mb-4">
+        {% if results %}
+        <div class="dashboard-card h-100">
+            <h5 class="mb-4">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                {{ get_text('analysis_results_header') }}
+            </h5>
+            
+            <!-- Applicant Info -->
+            <div class="mb-4 p-3 bg-dark bg-opacity-25 rounded">
+                <strong>{{ get_text('applicant') }}:</strong> {{ results.applicant_id }}
+            </div>
+            
+            <!-- Overall Completeness Score Circle -->
+            <div class="text-center mb-4">
+                <div class="score-circle-container" style="max-width: 220px; margin: 0 auto;">
+                    <svg viewBox="0 0 220 220" style="width: 100%; height: auto;">
+                        <!-- Background circle -->
+                        <circle cx="110" cy="110" r="90" 
+                                fill="none" 
+                                stroke="rgba(55, 65, 81, 0.2)" 
+                                stroke-width="18"/>
+                        
+                        <!-- Progress circle -->
+                        {% set circumference = 2 * 3.14159 * 90 %}
+                        {% set progress_length = (results.score / 100) * circumference %}
+                        {% set remaining_length = circumference - progress_length %}
+                        
+                        <circle cx="110" cy="110" r="90" 
+                                fill="none" 
+                                stroke="{% if results.score == 100 %}#10B981{% elif results.score >= 60 %}#F59E0B{% else %}#EF4444{% endif %}" 
+                                stroke-width="18" 
+                                stroke-linecap="round"
+                                stroke-dasharray="{{ progress_length }} {{ remaining_length }}"
+                                style="transition: stroke-dasharray 1s ease-in-out;"
+                                transform="rotate(-90 110 110)"/>
+                        
+                        <!-- Inner circle background -->
+                        <circle cx="110" cy="110" r="70" 
+                                fill="rgba(31, 41, 55, 0.8)" 
+                                stroke="rgba(55, 65, 81, 0.3)" 
+                                stroke-width="1"/>
+                        
+                        <!-- Score text -->
+                        <text x="110" y="105" text-anchor="middle" 
+                              style="font-size: 2.8rem; font-weight: 700; fill: {% if results.score == 100 %}#10B981{% elif results.score >= 60 %}#F59E0B{% else %}#EF4444{% endif %}">
+                            {{ results.score }}%
+                        </text>
+                        <text x="110" y="130" text-anchor="middle" 
+                              style="font-size: 0.9rem; fill: #9CA3AF; font-weight: 500;">
+                            Completeness
+                        </text>
+                        <text x="110" y="145" text-anchor="middle" 
+                              style="font-size: 0.8rem; fill: #6B7280;">
+                            Score
+                        </text>
+                        
+                        <!-- Progress indicators -->
+                        {% if results.score < 60 %}
+                        <text x="110" y="165" text-anchor="middle" 
+                              style="font-size: 0.7rem; fill: #EF4444; font-weight: 600;">
+                            INCOMPLETE
+                        </text>
+                        {% elif results.score < 100 %}
+                        <text x="110" y="165" text-anchor="middle" 
+                              style="font-size: 0.7rem; fill: #F59E0B; font-weight: 600;">
+                            READY FOR REVIEW
+                        </text>
+                        {% else %}
+                        <text x="110" y="165" text-anchor="middle" 
+                              style="font-size: 0.7rem; fill: #10B981; font-weight: 600;">
+                            COMPLETE
+                        </text>
+                        {% endif %}
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Status Badge -->
+            <div class="text-center mb-4">
+                <div class="status-badge-container">
+                    <span class="badge {% if results.score == 100 %}bg-success{% elif results.score >= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} px-4 py-2" 
+                          style="font-size: 1rem; border-radius: 25px;">
+                        <i class="bi {% if results.score == 100 %}bi-check-circle-fill{% elif results.score >= 60 %}bi-exclamation-triangle-fill{% else %}bi-x-circle-fill{% endif %} me-2"></i>
+                        {{ results.status }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Document Breakdown -->
+            <div class="mb-4">
+                <h6 class="mb-3">{{ get_text('document_importance_title') }}</h6>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="p-3 bg-danger bg-opacity-10 rounded text-center">
+                            <div class="fs-2 fw-bold text-danger">{{ results.critical_percentage }}%</div>
+                            <div class="small text-secondary">Critical Docs</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                {{ results.critical_submitted }}/{{ results.critical_total }} {{ get_text('submitted') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-warning bg-opacity-10 rounded text-center">
+                            <div class="fs-2 fw-bold text-warning">{{ results.supplementary_percentage }}%</div>
+                            <div class="small text-secondary">Supplementary</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                {{ results.supplementary_submitted }}/{{ results.supplementary_total }} {{ get_text('submitted') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Missing Documents -->
+            {% if results.missing_docs_detailed %}
+            <div class="mb-4">
+                <h6 class="mb-3">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    {{ get_text('missing_docs_label') }}
+                </h6>
+                <ul class="list-unstyled">
+                    {% for doc in results.missing_docs_detailed %}
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill me-2" 
+                           style="color: {% if doc.priority == 'High' %}#EF4444{% else %}#F59E0B{% endif %}"></i>
+                        <span>{{ doc.doc }}</span>
+                        <span class="badge {% if doc.priority == 'High' %}bg-danger{% else %}bg-warning text-dark{% endif %} ms-auto">
+                            {{ doc.type }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Next Steps -->
+            <div class="alert {% if results.score == 100 %}alert-success{% elif results.score >= 60 %}alert-warning{% else %}alert-danger{% endif %}">
+                <h6 class="alert-heading mb-2">
+                    <i class="bi bi-arrow-right-circle me-1"></i>
+                    {{ get_text('next_steps') }}
+                </h6>
+                {% if results.score == 100 %}
+                    <p class="mb-0">{{ get_text('step_ready_underwriting') }}</p>
+                {% elif results.score >= 60 %}
+                    <p class="mb-1">{{ get_text('step_collect_remaining') }}</p>
+                    <p class="mb-0">{{ get_text('step_proceed_review') }}</p>
+                {% else %}
+                    <p class="mb-1">{{ get_text('step_collect_critical') }}</p>
+                    <p class="mb-0">{{ get_text('step_contact_applicant') }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="dashboard-card h-100 d-flex align-items-center justify-content-center">
+            <div class="text-center text-secondary">
+                <i class="bi bi-clipboard" style="font-size: 4rem; opacity: 0.3;"></i>
+                <p class="mt-3 fs-5">{{ get_text('select_docs_to_evaluate') }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Key Insights -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="model-overview">
+            <h5 class="mb-4">
+                <i class="bi bi-lightbulb me-2"></i>
+                Key Insights
+            </h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-shield-check" style="font-size: 2rem; color: #10B981; margin-bottom: 0.5rem;"></i>
+                        <h6>Critical Documents</h6>
+                        <p class="text-secondary small mb-0">
+                            ID, income proof, and bank statements carry 60% weight in completeness scoring
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-clock-history" style="font-size: 2rem; color: #F59E0B; margin-bottom: 0.5rem;"></i>
+                        <h6>Processing Impact</h6>
+                        <p class="text-secondary small mb-0">
+                            Applications with 100% completeness process 40% faster on average
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-graph-up-arrow" style="font-size: 2rem; color: #4F46E5; margin-bottom: 0.5rem;"></i>
+                        <h6>Approval Correlation</h6>
+                        <p class="text-secondary small mb-0">
+                            Complete applications have 3x higher approval rates than incomplete ones
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.score-circle-container {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+}
+
+.score-circle-container:hover {
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+    transform: translateY(-2px);
+}
+
+.status-badge-container .badge {
+    animation: statusPulse 2s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes statusPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    50% { 
+        transform: scale(1.05); 
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+}
+</style>
+{% endblock %}

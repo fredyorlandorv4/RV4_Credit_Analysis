@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('User_Management') }} - Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="bi bi-shield-lock me-2"></i>
+                   {{ get_text('User_Management') }}
+                </h1>
+                <p class="text-secondary">{{ get_text('Manage_system_users_and_permissions') }}</p>
+            </div>
+            <button class="btn btn-primary-gradient" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-person-plus me-2"></i>
+               {{ get_text('Add_New_User') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>{{ get_text('Username') }}</th>
+                            <th>{{ get_text('Full_Name') }}</th>
+                            <th>{{ get_text('Email') }}</th>
+                            <th>{{ get_text('Role') }}</th>
+                            <th>{{ get_text('Department') }}</th>
+                            <th>{{ get_text('Status') }}</th>
+                            <th>{{ get_text('Last_Login') }}</th>
+                            <th>{{ get_text('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.get_full_name() }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ user.role.value|title }}</span>
+                            </td>
+                            <td>{{ user.department or '-' }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.last_login.strftime('%Y-%m-%d') if user.last_login else 'Never' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-warning" onclick="editUser({{ user.id }})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="resetPassword({{ user.id }})">
+                                        <i class="bi bi-key"></i>
+                                    </button>
+                                    {% if user.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('auth.admin_toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-danger">
+                                            <i class="bi bi-power"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">  {{ get_text('Add_New_User') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.admin_add_user') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ get_text('Username') }}</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ get_text('Email') }}</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ get_text('Password') }}</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ get_text('First_Name') }}</label>
+                            <input type="text" class="form-control" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ get_text('Last_Name') }}</label>
+                            <input type="text" class="form-control" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ get_text('Role') }}</label>
+                        <select class="form-select" name="role" required>
+                            <option value="EMPLOYEE">{{ get_text('Employee') }}</option>
+                            <option value="MANAGER">{{ get_text('Manager') }}</option>
+                            <option value="ADMIN">{{ get_text('Admin') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ get_text('Department') }}</label>
+                        <input type="text" class="form-control" name="department">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ get_text('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ get_text('Create_User') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

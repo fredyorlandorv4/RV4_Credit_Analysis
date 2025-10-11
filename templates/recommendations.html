@@ -1,0 +1,194 @@
+<!-- Add this style block to your predictions.html template or in a separate CSS file -->
+<style>
+    /* Dark theme for modal */
+    .modal-content {
+        background-color: #1F2937 !important; /* Dark background */
+        color: #F3F4F6 !important; /* Light text */
+        border: 1px solid #374151 !important; /* Dark border */
+    }
+    
+    .modal-header {
+        background-color: #1F2937 !important;
+        border-bottom: 1px solid #374151 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    .modal-title {
+        color: #F3F4F6 !important;
+    }
+    
+    .modal-body {
+        background-color: #1F2937 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    .modal-footer {
+        background-color: #1F2937 !important;
+        border-top: 1px solid #374151 !important;
+    }
+    
+    .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    
+    /* Recommendations content styling */
+    .rec-section-title { 
+        font-size: 1.1rem; 
+        font-weight: 600; 
+        margin-bottom: 0.75rem; 
+        padding-bottom: 0.5rem; 
+        border-bottom: 1px solid rgba(55, 65, 81, 0.5); 
+    }
+    
+    .rec-item { 
+        display: flex; 
+        padding: 1rem; 
+        margin-bottom: 0.75rem; 
+        border: 1px solid transparent; 
+        border-radius: 0.5rem; 
+        align-items: flex-start; 
+        line-height: 1.6; 
+    }
+    
+    .rec-item-icon { 
+        font-size: 1.5rem; 
+        margin-right: 1rem; 
+        margin-top: 0.25rem; 
+        flex-shrink: 0;
+    }
+    
+    /* Strength items with good contrast */
+    .rec-item.strength { 
+        background-color: rgba(16, 185, 129, 0.1); 
+        border-color: rgba(16, 185, 129, 0.3); 
+        color: #F3F4F6;
+    }
+    .rec-item.strength .rec-item-icon { 
+        color: #34D399; /* Brighter green */
+    }
+    
+    /* Risk items with good contrast */
+    .rec-item.risk { 
+        background-color: rgba(245, 158, 11, 0.1); 
+        border-color: rgba(245, 158, 11, 0.3); 
+        color: #F3F4F6;
+    }
+    .rec-item.risk .rec-item-icon { 
+        color: #FBBF24; /* Brighter yellow */
+    }
+    
+    /* Step items with good contrast */
+    .rec-item.step { 
+        background-color: rgba(79, 70, 229, 0.1); 
+        border-color: rgba(79, 70, 229, 0.3); 
+        color: #F3F4F6;
+    }
+    .rec-item.step .rec-item-icon { 
+        color: #A78BFA; /* Brighter purple */
+    }
+    
+    /* Priority badges */
+    .rec-priority-badge { 
+        font-size: 0.75rem; 
+        font-weight: 700; 
+        padding: 0.25em 0.75em; 
+        border-radius: 50rem; 
+        margin-left: 0.5rem; 
+        vertical-align: middle; 
+        text-transform: uppercase; 
+        display: inline-block;
+    }
+    
+    .rec-priority-badge.high { 
+        background-color: rgba(239, 68, 68, 0.2); 
+        color: #FCA5A5;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    
+    .rec-priority-badge.medium { 
+        background-color: rgba(245, 158, 11, 0.2); 
+        color: #FCD34D;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    
+    .rec-priority-badge.low { 
+        background-color: rgba(156, 163, 175, 0.2); 
+        color: #E5E7EB;
+        border: 1px solid rgba(156, 163, 175, 0.4);
+    }
+    
+    /* Section title colors */
+    .rec-section-title.text-success {
+        color: #34D399 !important;
+    }
+    
+    .rec-section-title.text-warning {
+        color: #FBBF24 !important;
+    }
+    
+    .rec-section-title.text-primary {
+        color: #A78BFA !important;
+    }
+    
+    /* Loading spinner for dark theme */
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top: 4px solid #818CF8;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 2rem auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Recommendations Template Content -->
+{% if recs.strengths %}
+<div class="mb-4">
+    <h5 class="rec-section-title text-success">
+        <i class="bi bi-shield-check me-2"></i>Strengths
+    </h5>
+    {% for item in recs.strengths %}
+    <div class="rec-item strength">
+        <i class="bi bi-check-circle-fill rec-item-icon"></i>
+        <div>{{ item | safe }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if recs.risks %}
+<div class="mb-4">
+    <h5 class="rec-section-title text-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>Opportunities for Mitigation
+    </h5>
+    {% for item in recs.risks %}
+    <div class="rec-item risk">
+        <i class="bi bi-exclamation-diamond rec-item-icon"></i>
+        <div>
+            {{ item.text }}
+            <span class="rec-priority-badge {{ item.priority | lower }}">{{ item.priority }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if recs.next_steps %}
+<div class="mb-2">
+    <h5 class="rec-section-title text-primary">
+        <i class="bi bi-arrow-right-circle me-2"></i>Strategic Next Steps
+    </h5>
+    {% for item in recs.next_steps %}
+    <div class="rec-item step">
+        <i class="{{ item.icon }} rec-item-icon"></i>
+        <div>{{ item.text }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- User Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                   {{ get_text('welcome_back') }}, {{ user.first_name }}!
+                </h1>
+                <p class="text-secondary">
+                    {{ get_text('dashboard_desc') }}
+                </p>
+            </div>
+            <div class="text-end">
+                <a href="{{ url_for('new_application') }}" class="btn btn-primary-gradient">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {{get_text('new_application')}}
+                </a>
+                {% if user.role.value == 'admin' %}
+                <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#trainModelModal">
+                    <i class="bi bi-cpu me-2"></i>
+                    {{get_text('model_training_header')}}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Status Bar (Admin Only) -->
+{% if user.role.value == 'admin' and model_info %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card bg-success bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">
+                        <i class="bi bi-cpu me-2"></i>
+                        {{ get_text('model_status') }}
+                       
+                    </h6>
+                    <div class="d-flex gap-4 text-sm">
+                        <span><strong>  {{ get_text('accuracy') }}:</strong> {{ model_info.accuracy }}%</span>
+                        <span><strong> {{ get_text('last_trained') }}:</strong> {{ model_info.last_trained }}</span>
+                        <span><strong>  {{ get_text('training_data') }}:</strong> {{ model_info.records_used }}  {{ get_text('records') }}</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-success" onclick="refreshModelInfo()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- User Stats Bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card bg-primary bg-opacity-10">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-circle" style="font-size: 2.5rem; color: var(--primary-color); margin-right: 1rem;"></i>
+                        <div>
+                            <h6 class="mb-0">{{ user.get_full_name() }}</h6>
+                            <small class="text-secondary">{{ user.role.value|title }} - {{ user.department or 'Credit Analysis' }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="metric-value">{{ user.total_applications }}</div>
+                            <div class="metric-label">{{ get_text('total_applications') }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="metric-value">{{ user.active_applications }}</div>
+                            <div class="metric-label">{{ get_text('active') }}</div>
+                        </div>
+                        <div class="col">
+                            <div class="metric-value">{{ user.approved_applications }}</div>
+                            <div class="metric-label">{{ get_text('approved') }}</div>
+                        </div>
+                        <div class="col">
+                            <a href="{{ url_for('my_clients') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-people me-1"></i>
+                                {{ get_text('my_customers') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards with fixed display -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-file-earmark-text kpi-icon"></i>
+            <div class="kpi-value" id="total-apps-kpi">{{ kpis.total_apps }}</div>
+            <div class="kpi-label">{{ get_text('kpi_total_apps') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-check-circle kpi-icon"></i>
+            <div class="kpi-value" id="approval-rate-kpi">{{ kpis.approval_rate }}</div>
+            <div class="kpi-label">{{ get_text('kpi_approval_rate') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-x-circle kpi-icon"></i>
+            <div class="kpi-value" id="rejection-rate-kpi">{{ kpis.rejection_rate }}</div>
+            <div class="kpi-label">{{ get_text('kpi_rejection_rate') }}</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="kpi-card">
+            <i class="bi bi-clock-history kpi-icon"></i>
+            <div class="kpi-value" id="avg-time-kpi">{{ kpis.avg_processing_time }}</div>
+            <div class="kpi-label">{{ get_text('kpi_avg_time') }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                   {{ get_text('your_recent_applications') }}
+                </h5>
+                <a href="{{ url_for('my_clients') }}" class="text-primary text-decoration-none">
+                      {{ get_text('view_all') }} <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            {% if recent_apps %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ get_text('application_id') }}</th>
+                            <th>{{ get_text('client_name') }}</th>
+                            <th>{{ get_text('type') }}</th>
+                            <th>{{ get_text('amount') }}</th>
+                            <th>{{ get_text('status') }}</th>
+                            <th>{{ get_text('date') }}</th>
+                            <th>{{ get_text('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in recent_apps %}
+                        <tr>
+                            <td>
+                                <code>{{ app.application_id }}</code>
+                            </td>
+                            <td>{{ app.client_name }}</td>
+                            <td>{{ app.application_type }}</td>
+                            <td>Q{{ "{:,.0f}".format(app.loan_amount or 0) }}</td>
+                            <td>
+                                <span class="badge {% if app.status == 'Approved' %}bg-success{% elif app.status == 'Declined' %}bg-danger{% elif app.status == 'Withdrawn' %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                            <td>{{ app.application_date.strftime('%Y-%m-%d') if app.application_date else '-' }}</td>
+                            <td>
+                                <a href="{{ url_for('client_detail', app_id=app.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="mt-2 text-secondary">No applications yet</p>
+                <a href="{{ url_for('new_application') }}" class="btn btn-primary-gradient">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Create Your First Application
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section - Only show if data exists -->
+{% if graphs.trends or graphs.funnel %}
+<div class="row mb-4">
+    <!-- Trends Chart -->
+    {% if graphs.trends %}
+    <div class="col-lg-8 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-graph-up me-2"></i>
+                {{ get_text('chart_trends') }}
+            </h4>
+            <div id="trendsChart" style="min-height: 400px;"></div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Funnel Chart -->
+    {% if graphs.funnel %}
+    <div class="col-lg-4 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-funnel me-2"></i>
+                {{ get_text('chart_funnel') }}
+            </h4>
+            <div id="funnelChart" style="min-height: 400px;"></div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if graphs.heatmap or graphs.box_plot %}
+<div class="row mb-4">
+    <!-- Correlation Heatmap -->
+    {% if graphs.heatmap %}
+    <div class="col-lg-6 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-grid-3x3 me-2"></i>
+                {{ get_text('chart_correlation') }}
+            </h4>
+            <div id="heatmapChart" style="min-height: 400px;"></div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Box Plot -->
+    {% if graphs.box_plot %}
+    <div class="col-lg-6 mb-3">
+        <div class="chart-container">
+            <h4 class="chart-title">
+                <i class="bi bi-box me-2"></i>
+                {{ get_text('chart_distribution') }}
+            </h4>
+            <div id="boxPlotChart" style="min-height: 400px;"></div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <h5 class="mb-4">
+                <i class="bi bi-lightning me-2"></i>
+                {{ get_text('quick_actions') }}
+            </h5>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('new_application') }}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-plus-circle me-2"></i>
+                         {{ get_text('quick_actions') }}
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('predictions') }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-cpu me-2"></i>
+                         {{ get_text('run_predictions') }}
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('withdrawal') }}" class="btn btn-outline-warning w-100">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                         {{ get_text('check_risk') }}
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('completeness') }}" class="btn btn-outline-info w-100">
+                        <i class="bi bi-check-circle me-2"></i>
+                         {{ get_text('document_check') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Train Model Modal (Admin Only) -->
+{% if user.role.value == 'admin' %}
+<div class="modal fade" id="trainModelModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-cpu me-2"></i>
+                    Train Machine Learning Models
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Training Options -->
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center h-100" style="background: rgba(79, 70, 229, 0.1); border: 1px solid rgba(79, 70, 229, 0.3);">
+                            <div class="card-body">
+                                <i class="bi bi-database" style="font-size: 3rem; color: var(--primary-color);"></i>
+                                <h6 class="mt-3">Train from Database</h6>
+                                <p class="small text-secondary">Use all application data from the database</p>
+                                <button class="btn btn-primary" onclick="trainFromDatabase()">
+                                    <i class="bi bi-play-fill me-1"></i>
+                                    Start Training
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center h-100" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <div class="card-body">
+                                <i class="bi bi-file-earmark-arrow-up" style="font-size: 3rem; color: var(--success-color);"></i>
+                                <h6 class="mt-3">Upload CSV</h6>
+                                <p class="small text-secondary">Train with custom CSV file</p>
+                                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                                <button class="btn btn-success" onclick="document.getElementById('csvFile').click()">
+                                    <i class="bi bi-upload me-1"></i>
+                                    Select File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center h-100" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <div class="card-body">
+                                <i class="bi bi-file-earmark-bar-graph" style="font-size: 3rem; color: var(--warning-color);"></i>
+                                <h6 class="mt-3">Sample Data</h6>
+                                <p class="small text-secondary">Quick training with sample dataset</p>
+                                <button class="btn btn-warning" onclick="trainFromSample()">
+                                    <i class="bi bi-lightning me-1"></i>
+                                    Use Sample
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Training Progress -->
+                <div id="trainingProgress" style="display: none;">
+                    <hr>
+                    <h6 class="mb-3">Training Progress</h6>
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">
+                            <span class="progress-text">Initializing...</span>
+                        </div>
+                    </div>
+                    <div id="trainingLog" class="small text-secondary" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- Training Results -->
+                <div id="trainingResults" style="display: none;">
+                    <hr>
+                    <h6 class="mb-3 text-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Training Complete!
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Approval Model Metrics:</h6>
+                            <table class="table table-sm table-dark">
+                                <tr><td>Accuracy:</td><td id="approvalAccuracy">-</td></tr>
+                                <tr><td>Precision:</td><td id="approvalPrecision">-</td></tr>
+                                <tr><td>Recall:</td><td id="approvalRecall">-</td></tr>
+                                <tr><td>AUC Score:</td><td id="approvalAUC">-</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Withdrawal Model Metrics:</h6>
+                            <table class="table table-sm table-dark">
+                                <tr><td>Accuracy:</td><td id="withdrawalAccuracy">-</td></tr>
+                                <tr><td>Precision:</td><td id="withdrawalPrecision">-</td></tr>
+                                <tr><td>Recall:</td><td id="withdrawalRecall">-</td></tr>
+                                <tr><td>AUC Score:</td><td id="withdrawalAUC">-</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-secondary">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Models trained with <span id="recordsUsed">0</span> records
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.table-dark {
+    --bs-table-bg: rgba(31, 41, 55, 0.5);
+}
+
+.table-dark tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+.chart-container {
+    min-height: 400px;
+}
+
+.progress-text {
+    font-weight: 600;
+}
+
+#trainingLog {
+    background: rgba(31, 41, 55, 0.5);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-family: 'Courier New', monospace;
+}
+
+/* Ensure training buttons are properly styled and clickable */
+.card .btn {
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 10;
+}
+
+.card .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card .btn:active {
+    transform: translateY(0);
+}
+
+/* Make sure modal is properly styled */
+.modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress bar styling */
+.progress {
+    background-color: rgba(31, 41, 55, 0.5);
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Debug script for training -->
+<script src="{{ url_for('static', filename='js/debug_training.js') }}"></script>
+
+<script>
+    // Apply dark theme to Plotly charts
+    const darkLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: {
+            color: '#F3F4F6',
+            family: 'Inter, sans-serif'
+        },
+        xaxis: {
+            gridcolor: 'rgba(55, 65, 81, 0.3)',
+            zerolinecolor: 'rgba(55, 65, 81, 0.3)',
+            color: '#9CA3AF'
+        },
+        yaxis: {
+            gridcolor: 'rgba(55, 65, 81, 0.3)',
+            zerolinecolor: 'rgba(55, 65, 81, 0.3)',
+            color: '#9CA3AF'
+        },
+        margin: {
+            l: 60,
+            r: 40,
+            t: 40,
+            b: 60
+        }
+    };
+
+    // Render charts if they exist
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if graphs.trends %}
+        const trendsData = {{ graphs.trends | safe }};
+        Plotly.newPlot('trendsChart', trendsData.data, {...trendsData.layout, ...darkLayout}, {responsive: true});
+        {% endif %}
+
+        {% if graphs.funnel %}
+        const funnelData = {{ graphs.funnel | safe }};
+        Plotly.newPlot('funnelChart', funnelData.data, {...funnelData.layout, ...darkLayout}, {responsive: true});
+        {% endif %}
+
+        {% if graphs.heatmap %}
+        const heatmapData = {{ graphs.heatmap | safe }};
+        Plotly.newPlot('heatmapChart', heatmapData.data, {...heatmapData.layout, ...darkLayout}, {responsive: true});
+        {% endif %}
+
+        {% if graphs.box_plot %}
+        const boxPlotData = {{ graphs.box_plot | safe }};
+        // Merge layouts without conflicts
+        const boxPlotLayout = Object.assign({}, boxPlotData.layout);
+        // Apply dark theme selectively to avoid conflicts
+        Object.assign(boxPlotLayout, {
+            paper_bgcolor: darkLayout.paper_bgcolor,
+            plot_bgcolor: darkLayout.plot_bgcolor,
+            font: darkLayout.font,
+            margin: darkLayout.margin
+        });
+        Plotly.newPlot('boxPlotChart', boxPlotData.data, boxPlotLayout, {responsive: true});
+        {% endif %}
+
+        // Make charts responsive
+        window.addEventListener('resize', function() {
+            {% if graphs.trends %}Plotly.Plots.resize('trendsChart');{% endif %}
+            {% if graphs.funnel %}Plotly.Plots.resize('funnelChart');{% endif %}
+            {% if graphs.heatmap %}Plotly.Plots.resize('heatmapChart');{% endif %}
+            {% if graphs.box_plot %}Plotly.Plots.resize('boxPlotChart');{% endif %}
+        });
+
+        // Ensure KPI values are visible
+        console.log('KPI values:', {
+            total: '{{ kpis.total_apps }}',
+            approval: '{{ kpis.approval_rate }}',
+            rejection: '{{ kpis.rejection_rate }}',
+            time: '{{ kpis.avg_processing_time }}'
+        });
+    });
+
+    // Training functions
+    function trainFromDatabase() {
+        console.log('trainFromDatabase called');
+        startTraining('/api/train/database', 'database');
+    }
+
+    function trainFromSample() {
+        console.log('trainFromSample called');
+        startTraining('/api/train/sample', 'sample');
+    }
+
+    // Handle CSV file selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const csvFileInput = document.getElementById('csvFile');
+        if (csvFileInput) {
+            csvFileInput.addEventListener('change', function(e) {
+                console.log('CSV file selected');
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('File name:', file.name);
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    startTraining('/api/train/csv', 'csv', formData);
+                }
+            });
+        }
+    });
+
+    function startTraining(url, source, data = null) {
+        // Show progress section
+        document.getElementById('trainingProgress').style.display = 'block';
+        document.getElementById('trainingResults').style.display = 'none';
+        
+        const progressBar = document.querySelector('.progress-bar');
+        const progressText = document.querySelector('.progress-text');
+        const trainingLog = document.getElementById('trainingLog');
+        
+        // Reset progress
+        progressBar.style.width = '0%';
+        progressBar.classList.remove('bg-danger');
+        progressBar.classList.add('bg-primary');
+        trainingLog.innerHTML = '';
+        
+        // Add log entry
+        addLogEntry(`Starting training from ${source}...`);
+        progressBar.style.width = '10%';
+        progressText.textContent = 'Loading data...';
+        
+        // Prepare request options
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        };
+        
+        if (data) {
+            requestOptions.body = data;
+        }
+        
+        // Make request
+        fetch(url, requestOptions)
+        .then(response => {
+            progressBar.style.width = '50%';
+            progressText.textContent = 'Training models...';
+            addLogEntry('Data loaded successfully');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return response.json();
+        })
+        .then(result => {
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Complete!';
+            
+            if (result.success) {
+                addLogEntry(`Training completed successfully with ${result.records_used} records`);
+                showTrainingResults(result);
+                
+                // Refresh page after a short delay to show updated model info
+                setTimeout(() => {
+                    addLogEntry('Refreshing page to show updated model info...');
+                    window.location.reload();
+                }, 2000);
+            } else {
+                addLogEntry(`Error: ${result.message}`, 'error');
+                progressBar.classList.remove('bg-primary');
+                progressBar.classList.add('bg-danger');
+                progressText.textContent = 'Failed!';
+            }
+        })
+        .catch(error => {
+            console.error('Training request failed:', error);
+            addLogEntry(`Error: ${error.message}`, 'error');
+            progressBar.style.width = '100%';
+            progressBar.classList.remove('bg-primary');
+            progressBar.classList.add('bg-danger');
+            progressText.textContent = 'Failed!';
+        });
+    }
+
+    function addLogEntry(message, type = 'info') {
+        const log = document.getElementById('trainingLog');
+        const timestamp = new Date().toLocaleTimeString();
+        const color = type === 'error' ? 'text-danger' : 'text-success';
+        log.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function showTrainingResults(result) {
+        document.getElementById('trainingResults').style.display = 'block';
+        
+        // Update approval metrics
+        if (result.metrics && result.metrics.approval) {
+            document.getElementById('approvalAccuracy').textContent = 
+                (result.metrics.approval.accuracy * 100).toFixed(1) + '%';
+            document.getElementById('approvalPrecision').textContent = 
+                (result.metrics.approval.precision * 100).toFixed(1) + '%';
+            document.getElementById('approvalRecall').textContent = 
+                (result.metrics.approval.recall * 100).toFixed(1) + '%';
+            document.getElementById('approvalAUC').textContent = 
+                result.metrics.approval.auc.toFixed(3);
+        }
+        
+        // Update withdrawal metrics
+        if (result.metrics && result.metrics.withdrawal) {
+            document.getElementById('withdrawalAccuracy').textContent = 
+                (result.metrics.withdrawal.accuracy * 100).toFixed(1) + '%';
+            document.getElementById('withdrawalPrecision').textContent = 
+                (result.metrics.withdrawal.precision * 100).toFixed(1) + '%';
+            document.getElementById('withdrawalRecall').textContent = 
+                (result.metrics.withdrawal.recall * 100).toFixed(1) + '%';
+            document.getElementById('withdrawalAUC').textContent = 
+                result.metrics.withdrawal.auc.toFixed(3);
+        }
+        
+        // Update records used
+        document.getElementById('recordsUsed').textContent = result.records_used || 0;
+    }
+
+    function refreshModelInfo() {
+        fetch('/api/model/info')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Update model info display if needed
+                console.log('Model info refreshed:', result);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing model info:', error);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!-- _recommendations_modal.html -->
+<div class="recommendations-content">
+    {% if recs.strengths %}
+    <div class="mb-4">
+        <h6 class="text-success mb-3">
+            <i class="bi bi-shield-check me-2"></i>
+            {{ get_text('rec_strengths') }}
+        </h6>
+        <ul class="list-unstyled">
+            {% for strength in recs.strengths %}
+            <li class="mb-2">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                {{ strength|safe }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if recs.risks %}
+    <div class="mb-4">
+        <h6 class="text-warning mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ get_text('rec_risks') }}
+        </h6>
+        <ul class="list-unstyled">
+            {% for risk in recs.risks %}
+            <li class="mb-2 d-flex align-items-start">
+                <i class="bi bi-exclamation-diamond-fill text-warning me-2 mt-1"></i>
+                <div>
+                    {{ risk.text|safe }}
+                    {% if risk.priority %}
+                    <span class="badge bg-danger ms-2">{{ risk.priority }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if recs.next_steps %}
+    <div class="mb-4">
+        <h6 class="text-primary mb-3">
+            <i class="bi bi-arrow-right-circle me-2"></i>
+            {{ get_text('rec_next_steps') }}
+        </h6>
+        <ul class="list-unstyled">
+            {% for step in recs.next_steps %}
+            <li class="mb-2 d-flex align-items-start">
+                <i class="{{ step.icon }} me-2 mt-1"></i>
+                <span>{{ step.text }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.recommendations-content {
+    padding: 1rem;
+}
+
+.recommendations-content h6 {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.recommendations-content ul li {
+    line-height: 1.6;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+</style>

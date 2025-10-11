@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+*.csv
+
+# Application Specific
+*.log
+.env
+.env.local
+
+# Data Files (training data will be tracked but large files excluded)
+data/*.csv
+!data/README.md
+
+# Model Weights (exclude large model files but keep directory structure)
+weights/*.pkl
+weights/*.joblib
+!weights/README.md
+
+# Reports
+report/*.html
+report/*.pdf
+!report/README.md
+
+# Application Data
+application_data/*.json
+!application_data/README.md
+
+# Temporary Files
+*.tmp
+*.temp
+temp/
+
+# Database
+*.db
+*.sqlite3
+
+# Secrets
+config.json
+secrets.json
+.ipynb_checkpoints/

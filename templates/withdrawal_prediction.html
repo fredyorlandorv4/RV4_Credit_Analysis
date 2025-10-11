@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('withdrawal_prediction') }} - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold mb-3">
+            <i class="bi bi-arrow-left-right me-2"></i>
+            {{ get_text('withdrawal_header') }}
+        </h1>
+        <p class="text-secondary">
+            {{ get_text('withdrawal_desc') }}
+        </p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+    <!-- Input Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="dashboard-card h-100">
+            <h5 class="mb-4">
+                <i class="bi bi-pencil-square me-2"></i>
+                {{ get_text('applicant_data') }}
+            </h5>
+            
+            <form method="POST" action="{{ url_for('withdrawal') }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('credit_score') }}</label>
+                        <input type="number" class="form-control" name="credit_score" 
+                               min="300" max="850" value="650" required>
+                        <div class="form-text">Range: 300-850</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('docs_submitted_count') }}</label>
+                        <input type="number" class="form-control" name="docs_submitted_count" 
+                               min="0" max="5" value="3" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('employment_length_months') }}</label>
+                        <input type="number" class="form-control" name="employment_length_months" 
+                               min="0" value="24" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('days_in_process') }}</label>
+                        <input type="number" class="form-control" name="days_in_process" 
+                               min="0" value="15" required>
+                    </div>
+                    
+                    <div class="col-12 mb-3">
+                        <label class="form-label">{{ get_text('comm_frequency') }}</label>
+                        <input type="number" class="form-control" name="comm_frequency" 
+                               min="0" max="10" step="0.1" value="0.5" required>
+                        <div class="form-text">Average contacts per week</div>
+                    </div>
+                </div>
+                
+                <!-- Loan Information Section -->
+                <h6 class="mt-4 mb-3">
+                    <i class="bi bi-bank me-1"></i>
+                    {{ get_text('loan_info_header') }}
+                </h6>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('loan_amount') }}</label>
+                        <input type="number" class="form-control" name="loan_amount" 
+                               min="0" step="1000" value="500000" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('property_price') }}</label>
+                        <input type="number" class="form-control" name="property_price" 
+                               min="0" step="1000" value="750000" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('monthly_income') }}</label>
+                        <input type="number" class="form-control" name="monthly_income" 
+                               min="0" step="100" value="35000" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('interest_rate') }}</label>
+                        <input type="number" class="form-control" name="interest_rate" 
+                               min="0" max="30" step="0.1" value="7.5" required>
+                    </div>
+                    
+                    <div class="col-12 mb-3">
+                        <label class="form-label">{{ get_text('loan_duration') }}</label>
+                        <input type="number" class="form-control" name="loan_duration" 
+                               min="1" max="30" value="20" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary-gradient w-100 mt-3">
+                    <i class="bi bi-calculator me-2"></i>
+                    {{ get_text('calculate_withdrawal_risk') }}
+                </button>
+            </form>
+            
+            <!-- Key Insights -->
+            <div class="mt-4 p-3 bg-primary bg-opacity-10 rounded">
+                <h6 class="text-primary mb-3">Key Risk Factors</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <i class="bi bi-clock-history" style="font-size: 1.5rem; color: #F59E0B;"></i>
+                        <p class="small mb-0 mt-1">{{ get_text('key_insight_1_title') }}</p>
+                        <p class="text-secondary" style="font-size: 0.75rem;">{{ get_text('key_insight_1_desc') }}</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 1.5rem; color: #EF4444;"></i>
+                        <p class="small mb-0 mt-1">{{ get_text('key_insight_2_title') }}</p>
+                        <p class="text-secondary" style="font-size: 0.75rem;">{{ get_text('key_insight_2_desc') }}</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #10B981;"></i>
+                        <p class="small mb-0 mt-1">{{ get_text('key_insight_3_title') }}</p>
+                        <p class="text-secondary" style="font-size: 0.75rem;">{{ get_text('key_insight_3_desc') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Section -->
+    <div class="col-lg-6 mb-4">
+        {% if results %}
+        <div class="dashboard-card h-100">
+            <h5 class="mb-4">
+                <i class="bi bi-speedometer2 me-2"></i>
+                {{ get_text('estimation_result') }}
+            </h5>
+            
+            <!-- Risk Gauge -->
+            <div class="text-center mb-4">
+                <div class="risk-gauge-container" style="max-width: 320px; margin: 0 auto;">
+                    <svg viewBox="0 0 320 200" style="width: 100%; height: auto;">
+                        <!-- Background semicircle -->
+                        <path d="M 60 170 A 100 100 0 0 1 260 170" 
+                              fill="none" 
+                              stroke="rgba(55, 65, 81, 0.2)" 
+                              stroke-width="24"/>
+                        
+                        <!-- Low Risk Zone: 0% to 35% (Green) -->
+                        <path d="M 60 170 A 100 100 0 0 1 160 70" 
+                              fill="none" 
+                              stroke="#10B981" 
+                              stroke-width="24" 
+                              stroke-linecap="round"
+                              opacity="{% if results.risk_score <= 35 %}1{% else %}0.3{% endif %}"/>
+                        
+                        <!-- Medium Risk Zone: 35% to 65% (Yellow) -->
+                        <path d="M 160 70 A 100 100 0 0 1 225 105" 
+                              fill="none" 
+                              stroke="#F59E0B" 
+                              stroke-width="24" 
+                              stroke-linecap="round"
+                              opacity="{% if results.risk_score > 35 and results.risk_score <= 65 %}1{% else %}0.3{% endif %}"/>
+                        
+                        <!-- High Risk Zone: 65% to 100% (Red) -->
+                        <path d="M 225 105 A 100 100 0 0 1 260 170" 
+                              fill="none" 
+                              stroke="#EF4444" 
+                              stroke-width="24" 
+                              stroke-linecap="round"
+                              opacity="{% if results.risk_score > 65 %}1{% else %}0.3{% endif %}"/>
+                        
+                        <!-- Calculate needle position -->
+                        {% set pi = 3.14159265359 %}
+                        {% set angle_degrees = results.risk_score * 1.8 %}
+                        {% set angle_radians = angle_degrees * pi / 180 %}
+                        {% set needle_x = 160 - (85 * (angle_radians|cos)) %}
+                        {% set needle_y = 170 - (85 * (angle_radians|sin)) %}
+                        
+                        <!-- Needle with glow effect -->
+                        <defs>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge> 
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        
+                        <line x1="160" y1="170" 
+                              x2="{{ needle_x }}" 
+                              y2="{{ needle_y }}"
+                              stroke="#F3F4F6" 
+                              stroke-width="5" 
+                              stroke-linecap="round"
+                              filter="url(#glow)"/>
+                        
+                        <!-- Center hub -->
+                        <circle cx="160" cy="170" r="10" 
+                                fill="#F3F4F6" 
+                                stroke="rgba(31, 41, 55, 0.5)" 
+                                stroke-width="2"/>
+                        
+                        <!-- Zone Labels -->
+                        <text x="100" y="190" text-anchor="middle" 
+                              fill="#10B981" font-size="16" font-weight="700">Low</text>
+                        <text x="160" y="55" text-anchor="middle" 
+                              fill="#F59E0B" font-size="16" font-weight="700">Medium</text>
+                        <text x="220" y="190" text-anchor="middle" 
+                              fill="#EF4444" font-size="16" font-weight="700">High</text>
+                        
+                        <!-- Percentage markers -->
+                        <text x="65" y="205" text-anchor="middle" 
+                              fill="#9CA3AF" font-size="12">0%</text>
+                        <text x="125" y="45" text-anchor="middle" 
+                              fill="#9CA3AF" font-size="12">35%</text>
+                        <text x="195" y="45" text-anchor="middle" 
+                              fill="#9CA3AF" font-size="12">65%</text>
+                        <text x="255" y="205" text-anchor="middle" 
+                              fill="#9CA3AF" font-size="12">100%</text>
+                    </svg>
+                </div>
+                
+                <!-- Risk Score Display -->
+                <div class="mt-4">
+                    <h1 class="display-4 fw-bold mb-2">
+                        <span style="color: {% if results.risk_score <= 35 %}#10B981{% elif results.risk_score <= 65 %}#F59E0B{% else %}#EF4444{% endif %}">
+                            {{ results.risk_score }}%
+                        </span>
+                    </h1>
+                    <p class="text-secondary fs-5">{{ get_text('estimated_withdrawal_risk') }}</p>
+                </div>
+            </div>
+            
+            <!-- Risk Assessment Alert -->
+            <div class="alert {% if results.risk_score <= 35 %}alert-success{% elif results.risk_score <= 65 %}alert-warning{% else %}alert-danger{% endif %} mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi {% if results.risk_score <= 35 %}bi-shield-check{% elif results.risk_score <= 65 %}bi-exclamation-triangle{% else %}bi-exclamation-octagon{% endif %} me-3" 
+                       style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>
+                        {% if results.risk_score <= 35 %}
+                            LOW RISK
+                        {% elif results.risk_score <= 65 %}
+                            MODERATE RISK
+                        {% else %}
+                            HIGH RISK
+                        {% endif %}
+                        </strong>
+                        <br>
+                        <span class="small">
+                        {% if results.risk_score <= 35 %}
+                            {{ get_text('risk_low') }}
+                        {% elif results.risk_score <= 65 %}
+                            {{ get_text('risk_medium') }}
+                        {% else %}
+                            {{ get_text('risk_high') }}
+                        {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommendations -->
+            <div class="mt-4">
+                <h6 class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {{ get_text('recommended_actions') }}
+                </h6>
+                <ul class="list-unstyled">
+                    {% if results.risk_score <= 35 %}
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-check2-circle text-success me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_standard_process') }}</strong>
+                                <p class="text-secondary small mb-0">Continue with normal processing timeline and standard communication schedule.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-calendar-check text-success me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_routine_updates') }}</strong>
+                                <p class="text-secondary small mb-0">Maintain regular contact intervals as per standard policy.</p>
+                            </div>
+                        </li>
+                    {% elif results.risk_score <= 65 %}
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-envelope-fill text-warning me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_weekly_followup') }}</strong>
+                                <p class="text-secondary small mb-0">Increase communication frequency to weekly check-ins.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-clock-fill text-warning me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_monitor_timeline') }}</strong>
+                                <p class="text-secondary small mb-0">Closely monitor processing timeline and identify potential bottlenecks.</p>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-telephone-fill text-danger me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_immediate_contact') }}</strong>
+                                <p class="text-secondary small mb-0">Contact applicant within 24 hours to address concerns and expedite process.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-person-check-fill text-danger me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_assign_specialist') }}</strong>
+                                <p class="text-secondary small mb-0">Assign dedicated retention specialist to manage this application.</p>
+                            </div>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-lightning-fill text-danger me-3 mt-1" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>{{ get_text('action_expedite_process') }}</strong>
+                                <p class="text-secondary small mb-0">Fast-track through approval process and remove any unnecessary delays.</p>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="dashboard-card h-100 d-flex align-items-center justify-content-center">
+            <div class="text-center text-secondary">
+                <i class="bi bi-graph-up" style="font-size: 4rem; opacity: 0.3;"></i>
+                <p class="mt-3 fs-5">{{ get_text('enter_data_to_calculate') }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.risk-gauge-container {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+}
+
+.risk-gauge-container:hover {
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .risk-gauge-container {
+        max-width: 280px;
+    }
+}
+</style>
+{% endblock %}

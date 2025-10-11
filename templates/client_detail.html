@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}{{ application.client_name }} - Client Details{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="bi bi-person-badge me-2"></i>
+                    {{ application.client_name }}
+                </h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary">
+                        <i class="bi bi-hash me-1"></i>
+                        {{ application.application_id }}
+                    </span>
+                    <span class="badge {% if application.status == 'Approved' %}bg-success{% elif application.status == 'Declined' %}bg-danger{% elif application.status == 'Withdrawn' %}bg-warning{% else %}bg-info{% endif %}">
+                        {{ application.status }}
+                    </span>
+                    <span class="text-secondary">
+                        <i class="bi bi-calendar me-1"></i>
+                        Applied: {{ application.application_date.strftime('%B %d, %Y') if application.application_date else 'N/A' }}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('my_clients') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Back to Clients
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Metrics -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card text-center">
+            <h6 class="text-secondary mb-3">Approval Probability</h6>
+            <div class="position-relative" style="height: 120px;">
+                <svg viewBox="0 0 200 100" style="width: 100%; height: 100%;">
+                    <path d="M 30 90 A 60 60 0 0 1 170 90" 
+                          fill="none" 
+                          stroke="rgba(55, 65, 81, 0.2)" 
+                          stroke-width="15"/>
+                    {% set prob = application.approval_probability or 0 %}
+                    {% set angle = prob * 1.8 %}
+                    <path d="M 30 90 A 60 60 0 0 1 170 90" 
+                          fill="none" 
+                          stroke="{% if prob >= 75 %}#10B981{% elif prob >= 50 %}#F59E0B{% else %}#EF4444{% endif %}" 
+                          stroke-width="15"
+                          stroke-dasharray="{{ prob * 1.885 }} 188.5"
+                          stroke-linecap="round"/>
+                </svg>
+                <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">
+                    <div class="display-6 fw-bold" style="color: {% if prob >= 75 %}#10B981{% elif prob >= 50 %}#F59E0B{% else %}#EF4444{% endif %}">
+                        {{ prob|round|int }}%
+                    </div>
+                </div>
+            </div>
+            {% if not application.approval_probability %}
+            <button class="btn btn-sm btn-outline-primary mt-2" onclick="runPrediction()">
+                <i class="bi bi-cpu me-1"></i>
+                Calculate
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card text-center">
+            <h6 class="text-secondary mb-3">Withdrawal Risk</h6>
+            <div class="position-relative" style="height: 120px;">
+                <svg viewBox="0 0 200 100" style="width: 100%; height: 100%;">
+                    <path d="M 30 90 A 60 60 0 0 1 170 90" 
+                          fill="none" 
+                          stroke="rgba(55, 65, 81, 0.2)" 
+                          stroke-width="15"/>
+                    {% set risk = application.withdrawal_risk or 0 %}
+                    <path d="M 30 90 A 60 60 0 0 1 170 90" 
+                          fill="none" 
+                          stroke="{% if risk <= 35 %}#10B981{% elif risk <= 65 %}#F59E0B{% else %}#EF4444{% endif %}" 
+                          stroke-width="15"
+                          stroke-dasharray="{{ risk * 1.885 }} 188.5"
+                          stroke-linecap="round"/>
+                </svg>
+                <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);">
+                    <div class="display-6 fw-bold" style="color: {% if risk <= 35 %}#10B981{% elif risk <= 65 %}#F59E0B{% else %}#EF4444{% endif %}">
+                        {{ risk|round|int }}%
+                    </div>
+                </div>
+            </div>
+            {% if not application.withdrawal_risk %}
+            <button class="btn btn-sm btn-outline-warning mt-2" onclick="runPrediction()">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Calculate
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card text-center">
+            <h6 class="text-secondary mb-3">Document Completeness</h6>
+            <div class="position-relative" style="height: 120px;">
+                <svg viewBox="0 0 120 120" style="width: 100%; height: 100%;">
+                    <circle cx="60" cy="60" r="50" 
+                            fill="none" 
+                            stroke="rgba(55, 65, 81, 0.2)" 
+                            stroke-width="10"/>
+                    {% set comp = application.completeness_score or 0 %}
+                    {% set circumference = 2 * 3.14159 * 50 %}
+                    {% set progress = (comp / 100) * circumference %}
+                    <circle cx="60" cy="60" r="50" 
+                            fill="none" 
+                            stroke="{% if comp == 100 %}#10B981{% elif comp >= 60 %}#F59E0B{% else %}#EF4444{% endif %}" 
+                            stroke-width="10" 
+                            stroke-dasharray="{{ progress }} {{ circumference }}"
+                            stroke-linecap="round"
+                            transform="rotate(-90 60 60)"/>
+                    <text x="60" y="65" text-anchor="middle" 
+                          style="font-size: 1.8rem; font-weight: 700; fill: {% if comp == 100 %}#10B981{% elif comp >= 60 %}#F59E0B{% else %}#EF4444{% endif %}">
+                        {{ comp|round|int }}%
+                    </text>
+                </svg>
+            </div>
+            <div class="mt-2">
+                <small class="text-secondary">{{ application.documents_submitted or 0 }}/5 documents</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client Information Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <ul class="nav nav-tabs" id="clientTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Information
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button">
+                        <i class="bi bi-currency-dollar me-1"></i>
+                        Financial
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button">
+                        <i class="bi bi-file-earmark-check me-1"></i>
+                        Documents
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button">
+                        <i class="bi bi-clock-history me-1"></i>
+                        Activity
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button">
+                        <i class="bi bi-lightning me-1"></i>
+                        Actions
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content mt-4" id="clientTabsContent">
+                <!-- Information Tab -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Personal Information</h6>
+                            <table class="table table-dark table-sm">
+                                <tr>
+                                    <td class="text-secondary">Name:</td>
+                                    <td>{{ application.client_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">DPI:</td>
+                                    <td>{{ application.dpi }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Email:</td>
+                                    <td>{{ application.email or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Phone:</td>
+                                    <td>{{ application.phone or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Age:</td>
+                                    <td>{{ application.age or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Gender:</td>
+                                    <td>{{ application.gender or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Marital Status:</td>
+                                    <td>{{ application.marital_status or 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Application Details</h6>
+                            <table class="table table-dark table-sm">
+                                <tr>
+                                    <td class="text-secondary">Type:</td>
+                                    <td>{{ application.application_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Product:</td>
+                                    <td>{{ application.product_type or 'Mortgage' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Status:</td>
+                                    <td>
+                                        <span class="badge {% if application.status == 'Approved' %}bg-success{% elif application.status == 'Declined' %}bg-danger{% elif application.status == 'Withdrawn' %}bg-warning{% else %}bg-info{% endif %}">
+                                            {{ application.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Decision:</td>
+                                    <td>{{ application.loan_decision or 'Pending' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Applied:</td>
+                                    <td>{{ application.application_date.strftime('%Y-%m-%d') if application.application_date else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Processing Days:</td>
+                                    <td>{{ application.processing_time_days or 0 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Agent:</td>
+                                    <td>{{ application.agent.get_full_name() }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if application.address %}
+                    <div class="mt-3">
+                        <h6 class="text-primary mb-2">Address</h6>
+                        <p class="text-secondary">{{ application.address }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.notes %}
+                    <div class="mt-3">
+                        <h6 class="text-primary mb-2">Notes</h6>
+                        <p class="text-secondary">{{ application.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Financial Tab -->
+                <div class="tab-pane fade" id="financial" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Income & Employment</h6>
+                            <table class="table table-dark table-sm">
+                                <tr>
+                                    <td class="text-secondary">Monthly Income:</td>
+                                    <td>Q{{ "{:,.2f}".format(application.monthly_income or 0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Employment Status:</td>
+                                    <td>{{ application.employment_status or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Employment Duration:</td>
+                                    <td>{{ application.employment_duration_months or 0 }} months</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Credit Score:</td>
+                                    <td>
+                                        <span class="badge {% if application.credit_score >= 700 %}bg-success{% elif application.credit_score >= 600 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ application.credit_score or 'N/A' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">DTI Ratio:</td>
+                                    <td>{{ "{:.1%}".format(application.dti_ratio) if application.dti_ratio else 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Loan Details</h6>
+                            <table class="table table-dark table-sm">
+                                <tr>
+                                    <td class="text-secondary">Loan Amount:</td>
+                                    <td>Q{{ "{:,.2f}".format(application.loan_amount or 0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Property Price:</td>
+                                    <td>Q{{ "{:,.2f}".format(application.property_price or 0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Down Payment:</td>
+                                    <td>Q{{ "{:,.2f}".format(application.down_payment or 0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Interest Rate:</td>
+                                    <td>{{ application.interest_rate }}% annually</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Loan Duration:</td>
+                                    <td>{{ application.loan_duration }} years</td>
+                                </tr>
+                            </table>
+                            
+                            {% if application.loan_amount and application.property_price %}
+                            <div class="mt-3 p-3 bg-primary bg-opacity-10 rounded">
+                                <h6 class="text-primary mb-2">Calculated Metrics</h6>
+                                {% set ltv = (application.loan_amount / application.property_price * 100) if application.property_price else 0 %}
+                                {% set monthly_rate = application.interest_rate / 100 / 12 if application.interest_rate else 0 %}
+                                {% set n_payments = application.loan_duration * 12 if application.loan_duration else 1 %}
+                                {% if monthly_rate > 0 %}
+                                    {% set monthly_payment = application.loan_amount * (monthly_rate * (1 + monthly_rate) ** n_payments) / ((1 + monthly_rate) ** n_payments - 1) %}
+                                {% else %}
+                                    {% set monthly_payment = application.loan_amount / n_payments if n_payments else 0 %}
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-secondary">LTV Ratio:</small>
+                                        <div class="fw-bold">{{ "{:.1f}%".format(ltv) }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-secondary">Monthly Payment:</small>
+                                        <div class="fw-bold">Q{{ "{:,.2f}".format(monthly_payment) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documents Tab -->
+                <div class="tab-pane fade" id="documents" role="tabpanel">
+                    <form method="POST" action="{{ url_for('update_documents', app_id=application.id) }}">
+                        <h6 class="text-primary mb-3">Document Checklist</h6>
+                        <div class="row">
+                            {% for doc in documents %}
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="documents" 
+                                           value="{{ doc.document_type }}" id="doc_{{ doc.id }}"
+                                           {% if doc.is_received %}checked{% endif %}>
+                                    <label class="form-check-label" for="doc_{{ doc.id }}">
+                                        {{ doc.document_name }}
+                                        {% if doc.is_received %}
+                                        <span class="badge bg-success ms-2">Received</span>
+                                        {% if doc.received_date %}
+                                        <small class="text-secondary ms-1">{{ doc.received_date.strftime('%Y-%m-%d') }}</small>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-danger ms-2">Missing</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>
+                                Update Documents
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">
+                        <h6 class="text-info mb-2">Document Summary</h6>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if application.completeness_score == 100 %}bg-success{% elif application.completeness_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ application.completeness_score or 0 }}%">
+                                {{ application.completeness_score|round|int }}% Complete
+                            </div>
+                        </div>
+                        <small class="text-secondary mt-1">{{ application.documents_submitted or 0 }} of 5 required documents received</small>
+                    </div>
+                </div>
+                
+                <!-- Activity Tab -->
+                <div class="tab-pane fade" id="activity" role="tabpanel">
+                    <h6 class="text-primary mb-3">Recent Activity</h6>
+                    {% if activities %}
+                    <div class="timeline">
+                        {% for activity in activities %}
+                        <div class="timeline-item mb-3 pb-3 border-bottom border-secondary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ activity.action }}</strong>
+                                    {% if activity.description %}
+                                    <p class="text-secondary mb-1">{{ activity.description }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        By {{ activity.user.get_full_name() }} on 
+                                        {{ activity.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-secondary">
+                                    {{ activity.timestamp.strftime('%m/%d') }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary">No activity recorded yet.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Actions Tab -->
+                <div class="tab-pane fade" id="actions" role="tabpanel">
+                    <h6 class="text-primary mb-3">Quick Actions</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="runPrediction()">
+                                <i class="bi bi-cpu me-2"></i>
+                                Run ML Prediction
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-warning w-100" data-bs-toggle="modal" data-bs-target="#statusModal">
+                                <i class="bi bi-pencil me-2"></i>
+                                Update Status
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-info w-100" data-bs-toggle="modal" data-bs-target="#contactModal">
+                                <i class="bi bi-telephone me-2"></i>
+                                Log Contact
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-primary mb-3 mt-4">Add Note</h6>
+                    <form method="POST" action="{{ url_for('update_application', app_id=application.id) }}">
+                        <div class="mb-3">
+                            <textarea class="form-control" name="notes" rows="4" placeholder="Add a note about this application...">{{ application.notes or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>
+                            Save Note
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Application Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_application', app_id=application.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status" required>
+                            <option value="In-Process" {% if application.status == 'In-Process' %}selected{% endif %}>In Process</option>
+                            <option value="Approved" {% if application.status == 'Approved' %}selected{% endif %}>Approved</option>
+                            <option value="Declined" {% if application.status == 'Declined' %}selected{% endif %}>Declined</option>
+                            <option value="Withdrawn" {% if application.status == 'Withdrawn' %}selected{% endif %}>Withdrawn</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Loan Decision</label>
+                        <select class="form-select" name="loan_decision">
+                            <option value="">N/A</option>
+                            <option value="Approved" {% if application.loan_decision == 'Approved' %}selected{% endif %}>Approved</option>
+                            <option value="Declined" {% if application.loan_decision == 'Declined' %}selected{% endif %}>Declined</option>
+                            <option value="Conditional" {% if application.loan_decision == 'Conditional' %}selected{% endif %}>Conditional Approval</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    background: transparent;
+    border-color: var(--border-color);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border-color: var(--border-color) var(--border-color) var(--card-bg);
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function runPrediction() {
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Calculating...';
+    button.disabled = true;
+    
+    // Call the recalculate API
+    fetch(`/api/recalculate_predictions/{{ application.id }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page to show updated predictions
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error calculating predictions');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>
+{% endblock %}

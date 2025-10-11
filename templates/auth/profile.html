@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold mb-3">
+            <i class="bi bi-person-circle me-2"></i>
+            User Profile
+        </h1>
+        <p class="text-secondary">
+            Manage your account information and view your performance statistics
+        </p>
+    </div>
+</div>
+
+<!-- Profile Information -->
+<div class="row">
+    <!-- User Information Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="dashboard-card h-100">
+            <div class="text-center mb-4">
+                <div class="profile-avatar mb-3">
+                    <i class="bi bi-person-circle" style="font-size: 5rem; color: var(--primary-color);"></i>
+                </div>
+                <h4 class="mb-1">{{ user.get_full_name() }}</h4>
+                <p class="text-secondary mb-2">@{{ user.username }}</p>
+                <span class="badge bg-primary">{{ user.role.value|title }}</span>
+            </div>
+            
+            <div class="profile-details">
+                <table class="table table-dark table-sm">
+                    <tr>
+                        <td class="text-secondary">Email:</td>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-secondary">Department:</td>
+                        <td>{{ user.department or 'Credit Analysis' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-secondary">Status:</td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-secondary">Member Since:</td>
+                        <td>{{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-secondary">Last Login:</td>
+                        <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'N/A' }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-key me-2"></i>
+                    Change Password
+                </a>
+                <button class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Statistics -->
+    <div class="col-lg-8 mb-4">
+        <div class="dashboard-card h-100">
+            <h5 class="mb-4">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                Performance Statistics
+            </h5>
+            
+            <!-- Stats Grid -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center p-3 bg-primary bg-opacity-10 rounded">
+                        <div class="fs-2 fw-bold text-primary">{{ stats.total_applications }}</div>
+                        <div class="small text-secondary">Total Applications</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center p-3 bg-info bg-opacity-10 rounded">
+                        <div class="fs-2 fw-bold text-info">{{ stats.active_applications }}</div>
+                        <div class="small text-secondary">Active</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                        <div class="fs-2 fw-bold text-success">{{ stats.approved_applications }}</div>
+                        <div class="small text-secondary">Approved</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                        <div class="fs-2 fw-bold text-warning">{{ stats.approval_rate }}%</div>
+                        <div class="small text-secondary">Approval Rate</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Chart Placeholder -->
+            <div class="p-4 bg-dark bg-opacity-25 rounded text-center">
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+            
+            <!-- Achievement Badges -->
+            <div class="mt-4">
+                <h6 class="mb-3">Achievements</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if stats.total_applications >= 100 %}
+                    <span class="badge bg-success p-2">
+                        <i class="bi bi-trophy me-1"></i>
+                        100+ Applications
+                    </span>
+                    {% endif %}
+                    {% if stats.approval_rate >= 80 %}
+                    <span class="badge bg-primary p-2">
+                        <i class="bi bi-star me-1"></i>
+                        High Approval Rate
+                    </span>
+                    {% endif %}
+                    {% if stats.active_applications >= 10 %}
+                    <span class="badge bg-info p-2">
+                        <i class="bi bi-lightning me-1"></i>
+                        Active Processor
+                    </span>
+                    {% endif %}
+                    {% if stats.total_applications < 10 %}
+                    <span class="badge bg-secondary p-2">
+                        <i class="bi bi-person-plus me-1"></i>
+                        New Member
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <h5 class="mb-4">
+                <i class="bi bi-clock-history me-2"></i>
+                Recent Activity
+            </h5>
+            
+            <div class="activity-timeline">
+                <!-- This would be populated with actual activity data -->
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Your recent activities will appear here
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.profile') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" name="department" value="{{ user.department }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Performance Chart
+const ctx = document.getElementById('performanceChart').getContext('2d');
+const performanceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Applications',
+            data: [12, 19, 15, 25, 22, 30],
+            borderColor: 'rgb(79, 70, 229)',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                    color: '#9CA3AF'
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                    color: '#9CA3AF'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

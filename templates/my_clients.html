@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}My Clients - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="bi bi-people me-2"></i>
+                  {{ get_text('my_customers') }}
+                </h1>
+                <p class="text-secondary">
+                     {{ get_text('my_clients_description') }}
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('new_application') }}" class="btn btn-primary-gradient">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {{ get_text('new_application') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <form method="GET" action="{{ url_for('my_clients') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label"> {{ get_text('search') }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" name="search" 
+                               placeholder="Name, DPI, or Application ID" 
+                               value="{{ request.args.get('search', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ get_text('status') }}</label>
+                    <select class="form-select" name="status">
+                        <option value="all" {% if request.args.get('status', 'all') == 'all' %}selected{% endif %}>{{ get_text('All Status') }}</option>
+                        <option value="In-Process" {% if request.args.get('status') == 'In-Process' %}selected{% endif %}>{{ get_text('In Process') }}</option>
+                        <option value="Approved" {% if request.args.get('status') == 'Approved' %}selected{% endif %}>{{ get_text('Approved') }}</option>
+                        <option value="Declined" {% if request.args.get('status') == 'Declined' %}selected{% endif %}>{{ get_text('Declined') }}</option>
+                        <option value="Withdrawn" {% if request.args.get('status') == 'Withdrawn' %}selected{% endif %}>{{ get_text('Withdrawn') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-funnel me-2"></i>
+                        {{ get_text('filter') }}
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <a href="{{ url_for('my_clients') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                         {{ get_text('reset') }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Clients Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th> {{ get_text('application_id') }}</th>
+                            <th>{{ get_text('client_name') }}</th>
+                            <th>DPI</th>
+                            <th>{{ get_text('type') }}</th>
+                            <th>{{ get_text('type') }}</th>
+                            <th>{{ get_text('credit_score') }}</th>
+                            <th>{{ get_text('status') }}</th>
+                            <th>{{ get_text('risk') }}</th>
+                            <th>{{ get_text('completeness') }}</th>
+                            <th>{{ get_text('date') }}</th>
+                            <th>{{ get_text('actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>
+                                <code class="text-primary">{{ app.application_id }}</code>
+                            </td>
+                            <td>
+                                <strong>{{ app.client_name }}</strong>
+                                {% if app.email %}
+                                <br><small class="text-secondary">{{ app.email }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.dpi }}</td>
+                            <td>{{ app.application_type or 'Mortgage' }}</td>
+                            <td>Q{{ "{:,.0f}".format(app.loan_amount or 0) }}</td>
+                            <td>
+                                <span class="badge {% if app.credit_score >= 700 %}bg-success{% elif app.credit_score >= 600 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ app.credit_score or '-' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if app.status == 'Approved' %}bg-success{% elif app.status == 'Declined' %}bg-danger{% elif app.status == 'Withdrawn' %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if app.withdrawal_risk %}
+                                <div class="progress" style="height: 20px; min-width: 80px;">
+                                    <div class="progress-bar {% if app.withdrawal_risk < 35 %}bg-success{% elif app.withdrawal_risk < 65 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         style="width: {{ app.withdrawal_risk }}%">
+                                        {{ app.withdrawal_risk|round|int }}%
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-secondary">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app.completeness_score is not none %}
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 20px; min-width: 60px;">
+                                        <div class="progress-bar {% if app.completeness_score == 100 %}bg-success{% elif app.completeness_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ app.completeness_score }}%">
+                                            {{ app.completeness_score|round|int }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-secondary">0%</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ app.application_date.strftime('%Y-%m-%d') if app.application_date else '-' }}
+                                {% if app.processing_time_days %}
+                                <br><small class="text-secondary">{{ app.processing_time_days }} days</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('client_detail', app_id=app.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       data-bs-toggle="tooltip" 
+                                       title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-success" 
+                                            onclick="runPrediction({{ app.id }})"
+                                            data-bs-toggle="tooltip" 
+                                            title="Run ML Prediction">
+                                        <i class="bi bi-cpu"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning" 
+                                            onclick="updateStatus({{ app.id }})"
+                                            data-bs-toggle="tooltip" 
+                                            title="Update Status">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div class="mt-4 p-3 bg-primary bg-opacity-10 rounded">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="metric-value">{{ applications|length }}</div>
+                        <div class="metric-label">{{ get_text('total_applications') }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value">{{ applications|selectattr('status', 'equalto', 'In-Process')|list|length }}</div>
+                        <div class="metric-label">{{ get_text('In Process') }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value">{{ applications|selectattr('status', 'equalto', 'Approved')|list|length }}</div>
+                        <div class="metric-label">{{ get_text('approved') }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-value">
+                            {% set approved = applications|selectattr('status', 'equalto', 'Approved')|list|length %}
+                            {% set total = applications|length %}
+                            {{ ((approved / total * 100) if total > 0 else 0)|round|int }}%
+                        </div>
+                        <div class="metric-label">{{ get_text('approval_rate') }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="bi bi-people" style="font-size: 4rem; opacity: 0.3;"></i>
+                <h4 class="mt-3 text-secondary">No Clients Found</h4>
+                <p class="text-secondary">
+                    {% if request.args.get('search') or request.args.get('status') != 'all' %}
+                        Try adjusting your filters or search criteria
+                    {% else %}
+                        Start by creating your first client application
+                    {% endif %}
+                </p>
+                <div class="mt-4">
+                    {% if request.args.get('search') or request.args.get('status') != 'all' %}
+                    <a href="{{ url_for('my_clients') }}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Clear Filters
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('new_application') }}" class="btn btn-primary-gradient">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        New Application
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Application Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="appId" name="app_id">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status" required>
+                            <option value="In-Process">In Process</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Declined">Declined</option>
+                            <option value="Withdrawn">Withdrawn</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Loan Decision</label>
+                        <select class="form-select" name="loan_decision">
+                            <option value="">N/A</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Declined">Declined</option>
+                            <option value="Conditional">Conditional Approval</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveStatus()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.table-dark tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+.progress {
+    background-color: rgba(55, 65, 81, 0.3);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+
+// Run prediction for an application
+function runPrediction(appId) {
+    // Create a form and submit it to predictions page
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("predictions") }}';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'application_id';
+    input.value = appId;
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Update application status
+function updateStatus(appId) {
+    document.getElementById('appId').value = appId;
+    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+    modal.show();
+}
+
+// Save status changes
+function saveStatus() {
+    const form = document.getElementById('statusForm');
+    const formData = new FormData(form);
+    const appId = document.getElementById('appId').value;
+    
+    fetch(`/update_application/${appId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating status: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the status');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_text('predictions_tools') }} - {{ get_text('dashboard_title') }}{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold mb-3">
+            <i class="bi bi-cpu me-2"></i>
+            {{ get_text('pred_page_title') }}
+        </h1>
+        <p class="text-secondary">
+            {{ get_text('pred_page_desc') }}
+        </p>
+    </div>
+</div>
+
+<!-- Prediction Form -->
+<form method="POST" action="{{ url_for('predictions') }}" id="predictionForm">
+    <div class="row">
+        <!-- Applicant Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-card h-100">
+                <h5 class="mb-4">
+                    <i class="bi bi-person-circle me-2"></i>
+                    {{ get_text('applicant_info_header') }}
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('age') }}</label>
+                    <input type="number" class="form-control" name="Age" 
+                           value="{{ submitted_data.get('Age', 35) }}" min="18" max="100" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('gender') }}</label>
+                    <select class="form-select" name="Gender" required>
+                        <option value="Male" {% if submitted_data.get('Gender') == 'Male' %}selected{% endif %}>
+                            {{ get_text('male') }}
+                        </option>
+                        <option value="Female" {% if submitted_data.get('Gender') == 'Female' %}selected{% endif %}>
+                            {{ get_text('female') }}
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('credit_score') }}</label>
+                    <input type="number" class="form-control" name="Credit_Score" 
+                           value="{{ submitted_data.get('Credit_Score', 650) }}" min="300" max="850" required>
+                    <div class="form-text">Range: 300-850</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Financial Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-card h-100">
+                <h5 class="mb-4">
+                    <i class="bi bi-currency-dollar me-2"></i>
+                    {{ get_text('financial_info_header') }}
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('monthly_income') }}</label>
+                    <input type="number" class="form-control" name="Monthly_Income" 
+                           value="{{ submitted_data.get('Monthly_Income', 35000) }}" min="0" step="100" required>
+                    <div class="form-text">Guatemalan Quetzales (GTQ)</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('dti_ratio') }}</label>
+                    <input type="number" class="form-control" name="DTI_Ratio" 
+                           value="{{ submitted_data.get('DTI_Ratio', 0.35) }}" min="0" max="1" step="0.01" required>
+                    <div class="form-text">Range: 0.00-1.00</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('employment_status') }}</label>
+                    <select class="form-select" name="Employment_Status" required>
+                        <option value="Employed" {% if submitted_data.get('Employment_Status') == 'Employed' %}selected{% endif %}>
+                            {{ get_text('employed') }}
+                        </option>
+                        <option value="Self-Employed" {% if submitted_data.get('Employment_Status') == 'Self-Employed' %}selected{% endif %}>
+                            {{ get_text('self_employed') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loan Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="dashboard-card h-100">
+                <h5 class="mb-4">
+                    <i class="bi bi-bank me-2"></i>
+                    {{ get_text('loan_info_header') }}
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('loan_amount') }}</label>
+                    <input type="number" class="form-control" name="Loan_Amount" 
+                           value="{{ submitted_data.get('Loan_Amount', 500000) }}" min="0" step="1000" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('property_price') }}</label>
+                    <input type="number" class="form-control" name="Property_Price" 
+                           value="{{ submitted_data.get('Property_Price', 750000) }}" min="0" step="1000" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('down_payment') }}</label>
+                    <input type="number" class="form-control" name="Down_Payment" 
+                           value="{{ submitted_data.get('Down_Payment', 250000) }}" min="0" step="1000" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('interest_rate') }}</label>
+                    <input type="number" class="form-control" name="Interest_Rate" 
+                           value="{{ submitted_data.get('Interest_Rate', 7.5) }}" min="0" max="30" step="0.1" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ get_text('loan_duration') }}</label>
+                    <input type="number" class="form-control" name="Loan_Duration" 
+                           value="{{ submitted_data.get('Loan_Duration', 20) }}" min="1" max="30" required>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Processing Information -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="dashboard-card">
+                <h5 class="mb-4">
+                    <i class="bi bi-clock-history me-2"></i>
+                    {{ get_text('processing_info_header') }}
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('days_in_process') }}</label>
+                        <input type="number" class="form-control" name="days_in_process" 
+                               value="{{ submitted_data.get('days_in_process', 15) }}" min="0" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('docs_submitted_count') }}</label>
+                        <input type="number" class="form-control" name="Documents_Submitted" 
+                               value="{{ submitted_data.get('Documents_Submitted', 4) }}" min="0" max="5" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('completeness_label') }} (%)</label>
+                        <input type="number" class="form-control" name="completeness_score" 
+                               value="{{ submitted_data.get('completeness_score', 80) }}" min="0" max="100" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ get_text('comm_frequency') }}</label>
+                        <input type="number" class="form-control" name="Communication_Frequency" 
+                               value="{{ submitted_data.get('Communication_Frequency', 0.5) }}" min="0" max="10" step="0.1" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Calculated Metrics -->
+        <div class="col-lg-6 mb-4">
+            <div class="dashboard-card bg-primary bg-opacity-10">
+                <h5 class="mb-4">
+                    <i class="bi bi-calculator me-2"></i>
+                    {{ get_text('calculated_metrics') }}
+                </h5>
+                
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="metric-display">
+                            <div class="metric-value" id="ltvRatio">66.7%</div>
+                            <div class="metric-label">{{ get_text('loan_to_value') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="metric-display">
+                            <div class="metric-value" id="downPaymentPercent">33.3%</div>
+                            <div class="metric-label">{{ get_text('down_payment_percentage') }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="metric-display">
+                            <div class="metric-value" id="monthlyPayment">Q4,247</div>
+                            <div class="metric-label">{{ get_text('monthly_payment') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="row">
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary-gradient btn-lg">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                {{ get_text('generate_analysis_button') }}
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Results Section -->
+{% if results %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="model-overview">
+            <h3 class="mb-4">
+                <i class="bi bi-bar-chart-line me-2"></i>
+                {{ get_text('model_results_header') }}
+            </h3>
+            
+            <div class="row">
+                <!-- Approval Probability -->
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-check-circle-fill" style="color: #10B981; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <div class="metric-value" style="color: {% if results.success_probability >= 75 %}#10B981{% elif results.success_probability >= 50 %}#F59E0B{% else %}#EF4444{% endif %}">
+                            {{ results.success_probability }}%
+                        </div>
+                        <div class="metric-label">{{ get_text('approval_label') }}</div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ results.success_probability }}%; background: {% if results.success_probability >= 75 %}#10B981{% elif results.success_probability >= 50 %}#F59E0B{% else %}#EF4444{% endif %}"
+                                 aria-valuenow="{{ results.success_probability }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Withdrawal Risk -->
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #F59E0B; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <div class="metric-value" style="color: {% if results.withdrawal_risk >= 65 %}#EF4444{% elif results.withdrawal_risk >= 35 %}#F59E0B{% else %}#10B981{% endif %}">
+                            {{ results.withdrawal_risk }}%
+                        </div>
+                        <div class="metric-label">{{ get_text('withdrawal_label') }}</div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ results.withdrawal_risk }}%; background: {% if results.withdrawal_risk >= 65 %}#EF4444{% elif results.withdrawal_risk >= 35 %}#F59E0B{% else %}#10B981{% endif %}"
+                                 aria-valuenow="{{ results.withdrawal_risk }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Document Completeness -->
+                <div class="col-md-4 mb-3">
+                    <div class="model-metric">
+                        <i class="bi bi-file-earmark-check-fill" style="color: #4F46E5; font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <div class="metric-value" style="color: {% if results.completeness_score == 100 %}#10B981{% elif results.completeness_score >= 60 %}#F59E0B{% else %}#EF4444{% endif %}">
+                            {{ results.completeness_score }}%
+                        </div>
+                        <div class="metric-label">{{ get_text('completeness_label') }}</div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ results.completeness_score }}%; background: {% if results.completeness_score == 100 %}#10B981{% elif results.completeness_score >= 60 %}#F59E0B{% else %}#EF4444{% endif %}"
+                                 aria-valuenow="{{ results.completeness_score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommendation Button -->
+            <div class="text-center mt-4">
+                <button type="button" class="btn btn-primary-gradient" data-bs-toggle="modal" data-bs-target="#recommendationModal">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {{ get_text('show_rec_button') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendation Modal -->
+<div class="modal fade" id="recommendationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {{ get_text('rec_title') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recommendationContent">
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ get_text('close') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-display {
+    padding: 1rem;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate loan metrics in real-time
+    function calculateMetrics() {
+        const loanAmount = parseFloat(document.querySelector('input[name="Loan_Amount"]').value) || 0;
+        const propertyPrice = parseFloat(document.querySelector('input[name="Property_Price"]').value) || 1;
+        const downPayment = parseFloat(document.querySelector('input[name="Down_Payment"]').value) || 0;
+        const interestRate = parseFloat(document.querySelector('input[name="Interest_Rate"]').value) || 0;
+        const loanDuration = parseFloat(document.querySelector('input[name="Loan_Duration"]').value) || 1;
+        
+        // Calculate LTV ratio
+        const ltv = propertyPrice > 0 ? (loanAmount / propertyPrice * 100).toFixed(1) : 0;
+        document.getElementById('ltvRatio').textContent = ltv + '%';
+        
+        // Calculate down payment percentage
+        const downPaymentPercent = propertyPrice > 0 ? (downPayment / propertyPrice * 100).toFixed(1) : 0;
+        document.getElementById('downPaymentPercent').textContent = downPaymentPercent + '%';
+        
+        // Calculate monthly payment using mortgage formula
+        const monthlyRate = interestRate / 100 / 12;
+        const numberOfPayments = loanDuration * 12;
+        let monthlyPayment = 0;
+        
+        if (monthlyRate > 0) {
+            monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
+                            (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+        } else {
+            monthlyPayment = loanAmount / numberOfPayments;
+        }
+        
+        document.getElementById('monthlyPayment').textContent = 'Q' + monthlyPayment.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    
+    // Add event listeners to loan-related inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const loanInputs = ['Loan_Amount', 'Property_Price', 'Down_Payment', 'Interest_Rate', 'Loan_Duration'];
+        loanInputs.forEach(name => {
+            const input = document.querySelector(`input[name="${name}"]`);
+            if (input) {
+                input.addEventListener('input', calculateMetrics);
+            }
+        });
+        
+        // Calculate initial values
+        calculateMetrics();
+    });
+
+    // Load recommendations when modal is shown
+    document.getElementById('recommendationModal')?.addEventListener('show.bs.modal', function () {
+        fetch("{{ url_for('recommendations') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(new FormData(document.getElementById('predictionForm')))
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('recommendationContent').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('recommendationContent').innerHTML = '<p class="text-danger">Error loading recommendations</p>';
+        });
+    });
+</script>
+{% endblock %}
