@@ -149,7 +149,7 @@ def before_request():
 @app.context_processor
 def inject_get_text():
     def get_text(key):
-        return _get_text(session.get('language', 'en'), key)
+        return _get_text(session.get('language', 'es'), key)
     return dict(get_text=get_text)
 
 @app.route('/change_language/<lang>')
