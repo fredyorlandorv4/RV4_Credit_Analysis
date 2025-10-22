@@ -177,8 +177,9 @@
                             <i class="bi bi-cash-stack me-1"></i>
                          {{ get_text('Loan_Amount_(Q)') }}
                         </label>
-                        <input type="number" class="form-control" name="loan_amount" id="loanAmount"
-                               value="{{ form_data.get('loan_amount', 500000) }}" min="0" step=".01" >
+                        <!--<input type="number" class="form-control" name="loan_amount" id="loanAmount"
+                               value="{{ form_data.get('loan_amount', 500000) }}" min="0" step=".01" >-->
+                           <input type="number" value="0" class="form-control" name="loan_amount" id="loanAmount" value="{{ form_data.get('loan_amount', 0) }}" readonly>    
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -187,7 +188,7 @@
                            {{ get_text('Property_Price_(Q)') }}
                         </label>
                         <input type="number" class="form-control" name="property_price" id="propertyPrice"
-                               value="{{ form_data.get('property_price', 750000) }}" min="0" step=".01">
+                               value="{{ form_data.get('property_price', 0) }}" min="0" step=".01">
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -196,7 +197,7 @@
                            {{ get_text('Down_Payment_(Q)') }}
                         </label>
                         <input type="number" class="form-control" name="down_payment" id="downPayment"
-                               value="{{ form_data.get('down_payment', 250000) }}" min="0" step=".01">
+                               value="{{ form_data.get('down_payment', 0) }}" min="0" step=".01">
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -347,12 +348,14 @@ function calculateMetrics() {
     document.getElementById('totalInterest').textContent = 'Q' + totalInterest.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     
     // Update down payment when property price or loan amount changes
-    if (propertyPrice > 0 && loanAmount > 0 && downPayment === 0) {
+    /*if (propertyPrice > 0 && loanAmount > 0 && downPayment === 0) {
         const calculatedDownPayment = propertyPrice - loanAmount;
+        console.log(calculatedDownPayment);
         if (calculatedDownPayment > 0) {
             document.getElementById('downPayment').value = calculatedDownPayment;
+            console.log('this line 355')
         }
-    }
+    }*/
 }
 
 // Add event listeners
@@ -482,5 +485,38 @@ document.getElementById('newApplicationForm').addEventListener('submit', functio
         alert('Please fill in all required fields');
     }
 });
+
+
+
+
+ function updateLoanAmount() {
+    const ppEl = document.getElementById('propertyPrice');
+    const dpEl = document.getElementById('downPayment');
+    const laEl = document.getElementById('loanAmount');
+
+    const propertyPrice = parseFloat(ppEl.value) || 0;
+    const downPayment   = parseFloat(dpEl.value) || 0;
+
+    // Resultado sin negativos
+    const raw = propertyPrice - downPayment;
+    const loanAmount = Math.max(raw, 0); // <- nunca < 0
+
+    laEl.value = loanAmount.toFixed(2);
+
+    // (Opcional) Validación: enganche no mayor al precio
+    dpEl.max = propertyPrice; // activa validación nativa HTML
+    if (downPayment > propertyPrice) {
+      dpEl.setCustomValidity('El enganche no puede ser mayor al precio de la propiedad.');
+    } else {
+      dpEl.setCustomValidity('');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('propertyPrice').addEventListener('input', updateLoanAmount);
+    document.getElementById('downPayment').addEventListener('input', updateLoanAmount);
+    document.getElementById('downPayment').addEventListener('change', updateLoanAmount);
+    updateLoanAmount();
+  });
 </script>
 {% endblock %}
