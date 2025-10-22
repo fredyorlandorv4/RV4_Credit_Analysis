@@ -131,7 +131,7 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ get_text('Monthly_Income_(Q)') }}</label>
                         <input type="number" class="form-control" name="monthly_income" id="monthlyIncome"
-                               value="{{ form_data.get('monthly_income', 35000) }}" min="0" step="100">
+                               value="{{ form_data.get('monthly_income', 35000) }}" min="0">
                     </div>
                     
                     <div class="col-md-6 mb-3">
@@ -178,7 +178,7 @@
                          {{ get_text('Loan_Amount_(Q)') }}
                         </label>
                         <input type="number" class="form-control" name="loan_amount" id="loanAmount"
-                               value="{{ form_data.get('loan_amount', 500000) }}" min="0" step="1000">
+                               value="{{ form_data.get('loan_amount', 500000) }}" min="0" step=".01" >
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -187,7 +187,7 @@
                            {{ get_text('Property_Price_(Q)') }}
                         </label>
                         <input type="number" class="form-control" name="property_price" id="propertyPrice"
-                               value="{{ form_data.get('property_price', 750000) }}" min="0" step="1000">
+                               value="{{ form_data.get('property_price', 750000) }}" min="0" step=".01">
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -196,7 +196,7 @@
                            {{ get_text('Down_Payment_(Q)') }}
                         </label>
                         <input type="number" class="form-control" name="down_payment" id="downPayment"
-                               value="{{ form_data.get('down_payment', 250000) }}" min="0" step="1000">
+                               value="{{ form_data.get('down_payment', 250000) }}" min="0" step=".01">
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -205,7 +205,7 @@
                             {{ get_text('Interest_Rate_(%)') }}
                         </label>
                         <input type="number" class="form-control" name="interest_rate" id="interestRate"
-                               value="{{ form_data.get('interest_rate', 7.5) }}" min="0" max="30" step="0.1">
+                               value="{{ form_data.get('interest_rate', 7.5) }}" min="0" max="30" step="0.01">
                     </div>
                     
                     <div class="col-md-3 mb-3">
@@ -214,7 +214,7 @@
                             {{ get_text('Loan_Duration_(Years)') }}
                         </label>
                         <input type="number" class="form-control" name="loan_duration" id="loanDuration"
-                               value="{{ form_data.get('loan_duration', 20) }}" min="1" max="30">
+                               value="{{ form_data.get('loan_duration', 20) }}" min="1" max="40">
                     </div>
                     
                     <!-- Calculated Metrics Display -->
@@ -320,11 +320,11 @@ function calculateMetrics() {
     const loanDuration = parseFloat(document.getElementById('loanDuration').value) || 1;
     
     // Calculate LTV ratio
-    const ltv = propertyPrice > 0 ? (loanAmount / propertyPrice * 100).toFixed(1) : 0;
+    const ltv = propertyPrice > 0 ? (loanAmount / propertyPrice * 100).toFixed(2) : 0;
     document.getElementById('ltvRatio').textContent = ltv + '%';
     
     // Calculate down payment percentage
-    const downPaymentPercent = propertyPrice > 0 ? (downPayment / propertyPrice * 100).toFixed(1) : 0;
+    const downPaymentPercent = propertyPrice > 0 ? (downPayment / propertyPrice * 100).toFixed(2) : 0;
     document.getElementById('downPaymentPercent').textContent = downPaymentPercent + '%';
     
     // Calculate monthly payment
